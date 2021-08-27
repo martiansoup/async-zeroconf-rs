@@ -1,0 +1,28 @@
+[package]
+name = "async-zeroconf"
+version = "0.1.0"
+authors = ["Alex Beharrell <martiansoup@users.noreply.github.com>"]
+edition = "2018"
+description = "Async library for wrapping Zeroconf implemenations for use with Tokio"
+
+readme = "README.md"
+homepage = "https://github.com/martiansoup/async-zeroconf-rs"
+repository = "https://github.com/martiansoup/async-zeroconf-rs"
+license = "MIT OR Apache-2.0"
+keywords = ["async", "tokio", "zeroconf", "dnssd", "bonjour"]
+categories = ["network-programming", "asynchronous", "os::macos-apis"]
+documentation = "https://docs.rs/async-zeroconf"
+
+[dependencies]
+log = "0.4.14"
+libc = "0.2.98"
+bonjour-sys = "0.1.0"
+tokio = { version = "1.8.1", features = ["macros", "net", "sync", "time", "rt"] }
+futures-core = "0.3.16"
+futures = "0.3.16"
+
+[dev-dependencies]
+tokio-test = "0.4.2"
+doc-comment = "0.3.3"
+tokio = { version = "1.8.1", features = ["rt-multi-thread"] }
+tokio-stream = "0.1"
