@@ -269,7 +269,7 @@ impl ServiceBrowserBuilder {
     /// Create a new ServiceBrowserBuilder for the specified service type
     pub fn new(service_type: &str) -> Self {
         ServiceBrowserBuilder {
-            interface: Interface::Unspecified,
+            interface: Default::default(),
             service_type: service_type.to_string(),
             domain: None,
             timeout: None,

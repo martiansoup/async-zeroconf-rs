@@ -29,8 +29,8 @@ async fn main() -> Result<(), async_zeroconf::ZeroconfError> {
         .timeout(tokio::time::Duration::from_secs(2))
         .browse()?;
 
-    while let Some(v) = services.recv().await {
-        println!("Service = {:?}", v);
+    while let Some(Ok(v)) = services.recv().await {
+        println!("Service = {}", v);
     }
     Ok(())
 }

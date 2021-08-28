@@ -1,4 +1,4 @@
-use crate::{Service, TxtRecord};
+use crate::{Interface, Service, ServiceBrowserBuilder, ServiceResolver, TxtRecord, ZeroconfError};
 
 #[test]
 fn create_service() {
@@ -15,10 +15,80 @@ fn create_service() {
 fn create_invalid_service() {
     let strings = ["http.tcp", "http.http", "http"];
     for s in strings {
-        let service = Service::new("", s, 0).publish();
+        let service = Service::new_with_txt("", s, 0, Default::default()).publish();
         println!("Testing '{}'", s);
         assert!(service.is_err());
     }
+}
+
+#[tokio::test]
+async fn publish_service() -> Result<(), ZeroconfError> {
+    let service = Service::new("Server", "_http._tcp", 80);
+    let _service_ref = service.publish()?;
+
+    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+    Ok(())
+}
+
+#[tokio::test]
+async fn publish_service_alt() -> Result<(), ZeroconfError> {
+    let mut service = Service::new("", "_http._tcp", 80);
+    let _service_ref = service
+        .prevent_rename()
+        .set_interface(Interface::from_ifname("lo0")?)
+        .set_host("localhost".to_string())
+        .set_domain("local".to_string())
+        .add_txt("k".to_string(), "v".to_string())
+        .publish()?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn publish_service_err_name() {
+    let service = Service::new("Server\0", "_http._tcp", 80);
+    let service_ref = service.publish();
+    assert!(matches!(service_ref.unwrap_err(), ZeroconfError::NullString(_)))
+}
+
+#[tokio::test]
+async fn publish_service_err_req() {
+    let service = Service::new("Server", "_http\0._tcp", 80);
+    let service_ref = service.publish();
+    assert!(matches!(service_ref.unwrap_err(), ZeroconfError::NullString(_)))
+}
+
+#[tokio::test]
+async fn publish_service_err_domain() {
+    let mut service = Service::new("Server", "_http._tcp", 80);
+    let service_ref = service.set_domain("\0".to_string()).publish();
+    assert!(matches!(service_ref.unwrap_err(), ZeroconfError::NullString(_)))
+}
+
+#[tokio::test]
+async fn browser() -> Result<(), ZeroconfError> {
+    let mut browser = ServiceBrowserBuilder::new("_smb._tcp");
+    let mut services = browser
+        .timeout(tokio::time::Duration::from_secs(2))
+        .browse()?;
+
+    while let Some(Ok(v)) = services.recv().await {
+        println!("Service = {}", v);
+    }
+    Ok(())
+}
+
+#[tokio::test]
+async fn resolve() -> Result<(), ZeroconfError> {
+    let mut browser = ServiceBrowserBuilder::new("_smb._tcp");
+    let mut services = browser
+        .timeout(tokio::time::Duration::from_secs(2))
+        .browse()?;
+
+    while let Some(Ok(v)) = services.recv().await {
+        let resolved_service = ServiceResolver::r(&v).await?;
+        println!("Service = {:?}", resolved_service);
+    }
+    Ok(())
 }
 
 /// TXT record validation

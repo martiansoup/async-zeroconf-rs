@@ -139,7 +139,7 @@ impl Service {
             name: name.to_string(),
             service_type: service_type.to_string(),
             port,
-            interface: Interface::Unspecified,
+            interface: Default::default(),
             domain: None,
             host: None,
             txt,
