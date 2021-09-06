@@ -11,11 +11,13 @@ fn create_service() {
     assert_eq!(service.service_type(), service_type);
 }
 
-#[test]
-fn create_invalid_service() {
+#[tokio::test]
+async fn create_invalid_service() {
     let strings = ["http.tcp", "http.http", "http"];
     for s in strings {
-        let service = Service::new_with_txt("", s, 0, Default::default()).publish();
+        let service = Service::new_with_txt("", s, 0, Default::default())
+            .publish()
+            .await;
         println!("Testing '{}'", s);
         assert!(service.is_err());
     }
@@ -24,7 +26,7 @@ fn create_invalid_service() {
 #[tokio::test]
 async fn publish_service() -> Result<(), ZeroconfError> {
     let service = Service::new("Server", "_http._tcp", 80);
-    let _service_ref = service.publish()?;
+    let _service_ref = service.publish().await?;
 
     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
     Ok(())
@@ -39,29 +41,39 @@ async fn publish_service_alt() -> Result<(), ZeroconfError> {
         .set_host("localhost".to_string())
         .set_domain("local".to_string())
         .add_txt("k".to_string(), "v".to_string())
-        .publish()?;
+        .publish()
+        .await?;
     Ok(())
 }
 
 #[tokio::test]
 async fn publish_service_err_name() {
     let service = Service::new("Server\0", "_http._tcp", 80);
-    let service_ref = service.publish();
-    assert!(matches!(service_ref.unwrap_err(), ZeroconfError::NullString(_)))
+    let service_ref = service.publish().await;
+    assert!(matches!(
+        service_ref.unwrap_err(),
+        ZeroconfError::NullString(_)
+    ))
 }
 
 #[tokio::test]
 async fn publish_service_err_req() {
     let service = Service::new("Server", "_http\0._tcp", 80);
-    let service_ref = service.publish();
-    assert!(matches!(service_ref.unwrap_err(), ZeroconfError::NullString(_)))
+    let service_ref = service.publish().await;
+    assert!(matches!(
+        service_ref.unwrap_err(),
+        ZeroconfError::NullString(_)
+    ))
 }
 
 #[tokio::test]
 async fn publish_service_err_domain() {
     let mut service = Service::new("Server", "_http._tcp", 80);
-    let service_ref = service.set_domain("\0".to_string()).publish();
-    assert!(matches!(service_ref.unwrap_err(), ZeroconfError::NullString(_)))
+    let service_ref = service.set_domain("\0".to_string()).publish().await;
+    assert!(matches!(
+        service_ref.unwrap_err(),
+        ZeroconfError::NullString(_)
+    ))
 }
 
 #[tokio::test]

@@ -35,7 +35,7 @@ impl Interface {
     /// println!("{:?}", interface);
     /// let service_ref = async_zeroconf::Service::new("Server", "_http._tcp", 80)
     ///                       .set_interface(interface)
-    ///                       .publish()?;
+    ///                       .publish().await?;
     /// # let interface2 = async_zeroconf::Interface::from_ifname("unknown_if");
     /// # assert!(interface2.is_err());
     /// # Ok::<(), async_zeroconf::ZeroconfError>(())

@@ -15,17 +15,17 @@ use tokio::sync::mpsc;
 use bonjour_sys::{DNSServiceErrorType, DNSServiceFlags, DNSServiceRef};
 
 /// `ServiceBrowserBuilder` is used to browse for services. Once all the
-/// required information is added to the ServiceBrowserBuilder the
-/// [browse][ServiceBrowserBuilder::browse] method will produce a
-/// [ServiceBrowser] which can be used as a stream, or the
-/// [ServiceBrowser::recv] method will produce the next service found.
+/// required information is added to the `ServiceBrowserBuilder` the
+/// [`browse`][`ServiceBrowserBuilder::browse`] method will produce a
+/// [`ServiceBrowser`] which can be used as a stream, or the
+/// [`ServiceBrowser::recv`] method will produce the next service found.
 ///
 /// # Note
 /// This does not resolve the services so does not contain all information
 /// associated with the service. A further resolve operation is required to
-/// fully populate the service. This can be done with a [ServiceResolver].
-/// Alternatively, the [ServiceBrowser::recv_resolve] method can be
-/// used to resolve the services inline, or [ServiceBrowser::resolving] used
+/// fully populate the service. This can be done with a [`ServiceResolver`].
+/// Alternatively, the [`ServiceBrowser::recv_resolve`] method can be
+/// used to resolve the services inline, or [`ServiceBrowser::resolving`] used
 /// to convert the stream into one that resolves services before returning
 /// them.
 ///
@@ -53,7 +53,7 @@ pub struct ServiceBrowserBuilder {
 }
 
 /// Struct used to get the results of a service browser which should be
-/// constructed with a [ServiceBrowserBuilder].
+/// constructed with a [`ServiceBrowserBuilder`].
 #[derive(Debug)]
 pub struct ServiceBrowser {
     // Channel to receive found services
@@ -148,10 +148,10 @@ impl ServiceBrowser {
     }
 
     /// Return a stream that includes the resolve operation before returning
-    /// results. The [ServiceBrowser] is consumed to produce the new stream.
+    /// results. The [`ServiceBrowser`] is consumed to produce the new stream.
     ///
     /// The values produced by the stream are equivalent to those produced by
-    /// [recv_resolve][ServiceBrowser::recv_resolve].
+    /// [`recv_resolve`][`ServiceBrowser::recv_resolve`].
     ///
     /// # Examples
     /// ```
@@ -266,7 +266,7 @@ unsafe extern "C" fn browse_callback(
 }
 
 impl ServiceBrowserBuilder {
-    /// Create a new ServiceBrowserBuilder for the specified service type
+    /// Create a new `ServiceBrowserBuilder` for the specified service type
     pub fn new(service_type: &str) -> Self {
         ServiceBrowserBuilder {
             interface: Default::default(),
@@ -283,10 +283,10 @@ impl ServiceBrowserBuilder {
         self
     }
 
-    /// Set the browser to close if no more [Service]s are found.
+    /// Set the browser to close if no more [`Service`]s are found.
     ///
     /// # Note
-    /// The browser can only detect the end of the [Service]s if
+    /// The browser can only detect the end of the [`Service`]s if
     /// any are found. A timeout can be used in combination with closing on
     /// end to ensure that the browser will terminate.
     pub fn close_on_end(&mut self) -> &mut Self {
@@ -307,7 +307,7 @@ impl ServiceBrowserBuilder {
     }
 
     /// Start the browsing operation, which will continue until the specified
-    /// timeout or until the [ServiceBrowser] is dropped.
+    /// timeout or until the [`ServiceBrowser`] is dropped.
     ///
     /// # Examples
     /// ```
@@ -332,13 +332,13 @@ impl ServiceBrowserBuilder {
     }
 
     /// Start the browsing operation, which will continue until the specified
-    /// timeout or until the [ServiceBrowser] is dropped. The returned
-    /// [ProcessTask] future must be awaited to process events associated with
+    /// timeout or until the [`ServiceBrowser`] is dropped. The returned
+    /// [`ProcessTask`] future must be awaited to process events associated with
     /// the browser.
     ///
     /// # Note
     /// This method is intended if more control is needed over how the task
-    /// is spawned. [ServiceBrowserBuilder::browse] will automatically spawn
+    /// is spawned. [`ServiceBrowserBuilder::browse`] will automatically spawn
     /// the task.
     ///
     /// # Examples

@@ -3,13 +3,29 @@ use crate::{
     ZeroconfError,
 };
 use std::{ffi, fmt};
+use tokio::sync::mpsc;
 
 use bonjour_sys::{DNSServiceErrorType, DNSServiceFlags, DNSServiceRef};
+use std::future::Future;
+use std::sync::Arc;
 
-/// Struct representing a ZeroConf service. This should be created with all
+#[derive(Debug)]
+struct ServicePublishContext {
+    tx: mpsc::UnboundedSender<Result<(), BonjourError>>,
+}
+
+impl ServicePublishContext {
+    fn send(&self, e: Result<(), BonjourError>) {
+        if let Err(e) = self.tx.send(e) {
+            log::warn!("Failed to send status, receiver dropped: {}", e);
+        }
+    }
+}
+
+/// Struct representing a `ZeroConf` service. This should be created with all
 /// the information that should be associated with the service and then the
-/// [publish][Service::publish] method can be used to register the service.
-/// The [ServiceRef] returned from [publish][Service::publish] should be held
+/// [`publish`][`Service::publish`] method can be used to register the service.
+/// The [`ServiceRef`] returned from [`publish`][`Service::publish`] should be held
 /// for as long as the service should continue being advertised, once dropped
 /// the service will be deallocated.
 ///
@@ -20,20 +36,20 @@ use bonjour_sys::{DNSServiceErrorType, DNSServiceFlags, DNSServiceRef};
 /// ```
 /// # tokio_test::block_on(async {
 /// let service_ref = async_zeroconf::Service::new("Server", "_http._tcp", 80)
-///                       .publish()?;
+///                       .publish().await?;
 /// // Service kept alive until service_ref dropped
 /// # Ok::<(), async_zeroconf::ZeroconfError>(())
 /// # });
 /// ```
 ///
 /// These fields can be customised if required. More details are available in
-/// the [DNSServiceRegister][reg] documentation.
+/// the [`DNSServiceRegister`][reg] documentation.
 /// ```
 /// # tokio_test::block_on(async {
 /// let service_ref = async_zeroconf::Service::new("Server", "_http._tcp", 80)
 ///                       .set_domain("local".to_string())
 ///                       .set_host("localhost".to_string())
-///                       .publish()?;
+///                       .publish().await?;
 /// // Service kept alive until service_ref dropped
 /// # Ok::<(), async_zeroconf::ZeroconfError>(())
 /// # });
@@ -77,8 +93,9 @@ unsafe extern "C" fn dns_sd_callback(
     name: *const libc::c_char,
     regtype: *const libc::c_char,
     domain: *const libc::c_char,
-    _context: *mut libc::c_void,
+    context: *mut libc::c_void,
 ) {
+    let proxy = &*(context as *const ServicePublishContext);
     if error == 0 {
         let c_name = ffi::CStr::from_ptr(name);
         let c_type = ffi::CStr::from_ptr(regtype);
@@ -93,12 +110,14 @@ unsafe extern "C" fn dns_sd_callback(
             .to_str()
             .expect("string originally from rust should be safe");
         log::debug!("Service Callback OK ({}:{}:{})", name, regtype, domain);
+        proxy.send(Ok(()));
     } else {
         log::debug!(
             "Service Callback Error ({}:{})",
             error,
             Into::<BonjourError>::into(error)
-        )
+        );
+        proxy.send(Err(error.into()));
     }
 }
 
@@ -106,7 +125,7 @@ impl Service {
     /// Create a new Service, called `name` of type `service_type` that is
     /// listening on port `port`.
     ///
-    /// This must then be published with [Service::publish] to advertise the
+    /// This must then be published with [`Service::publish`] to advertise the
     /// service.
     ///
     /// # Examples
@@ -122,7 +141,7 @@ impl Service {
     /// Create a new Service, called `name` of type `service_type` that is
     /// listening on port `port` with the TXT records described by `txt`.
     ///
-    /// This must then be published with [Service::publish] to advertise the
+    /// This must then be published with [`Service::publish`] to advertise the
     /// service.
     ///
     /// # Examples
@@ -252,8 +271,8 @@ impl Service {
         self.resolve
     }
 
-    /// Publish the service, returns a [ServiceRef] which should be held to
-    /// keep the service alive. Once the [ServiceRef] is dropped the service
+    /// Publish the service, returns a [`ServiceRef`] which should be held to
+    /// keep the service alive. Once the [`ServiceRef`] is dropped the service
     /// will be removed and deallocated.
     ///
     /// # Arguments
@@ -267,28 +286,34 @@ impl Service {
     /// // Create a service description
     /// let service = async_zeroconf::Service::new("Server", "_http._tcp", 80);
     /// // Publish the service
-    /// let service_ref = service.publish()?;
+    /// let service_ref = service.publish().await?;
     /// // Service kept alive until service_ref dropped
     /// # Ok::<(), async_zeroconf::ZeroconfError>(())
     /// # });
     /// ```
-    pub fn publish(&self) -> Result<ServiceRef, ZeroconfError> {
-        let (service, future) = self.publish_task()?;
+    pub async fn publish(&self) -> Result<ServiceRef, ZeroconfError> {
+        let (service, task, future) = self.publish_task()?;
 
-        tokio::spawn(future);
+        // Spawn task
+        tokio::spawn(task);
+
+        // Get any errors and wait until service started
+        future.await?;
 
         Ok(service)
     }
 
-    /// Publish the service, returns a [ServiceRef] which should be held to
+    /// Publish the service, returns a [`ServiceRef`] which should be held to
     /// keep the service alive and a future which should be awaited on to
     /// respond to any events associated with keeping the service registered.
-    /// Once the [ServiceRef] is dropped the service will be removed and
+    /// Once the [`ServiceRef`] is dropped the service will be removed and
     /// deallocated.
     ///
     /// # Note
     /// This method is intended if more control is needed over how the task
-    /// is spawned. [Service::publish] will automatically spawn the task.
+    /// is spawned. [`Service::publish`] will automatically spawn the task.
+    /// The task should be spawned first to process events, and then the
+    /// returned future waited on to collect any errors that occurred.
     ///
     /// # Examples
     /// ```
@@ -296,31 +321,58 @@ impl Service {
     /// // Create a service description
     /// let service = async_zeroconf::Service::new("Server", "_http._tcp", 80);
     /// // Publish the service
-    /// let (service_ref, task) = service.publish_task()?;
+    /// let (service_ref, task, service_ok) = service.publish_task()?;
     /// // Spawn the task to respond to events
     /// tokio::spawn(task);
+    /// // Wait to confirm service started ok
+    /// service_ok.await?;
     /// // Service kept alive until service_ref dropped
     /// # Ok::<(), async_zeroconf::ZeroconfError>(())
     /// # });
     /// ```
-    pub fn publish_task(&self) -> Result<(ServiceRef, impl ProcessTask), ZeroconfError> {
+    pub fn publish_task(
+        &self,
+    ) -> Result<
+        (
+            ServiceRef,
+            impl ProcessTask,
+            impl Future<Output = Result<(), ZeroconfError>>,
+        ),
+        ZeroconfError,
+    > {
         self.validate()?;
 
+        let (tx, mut rx) = mpsc::unbounded_channel();
+
+        let callback_context = ServicePublishContext { tx };
+        let context = Arc::new(callback_context);
+        let context_ptr =
+            Arc::as_ptr(&context) as *mut Arc<ServicePublishContext> as *mut libc::c_void;
+
         let service_ref = crate::c_intf::service_register(
-            &self.name,
-            (&self.service_type, self.port),
+            (&self.name, &self.service_type, self.port),
             &self.interface,
             (self.domain.as_deref(), self.host.as_deref()),
             &self.txt,
             Some(dns_sd_callback),
             self.allow_rename,
+            context_ptr,
         )?;
 
-        Ok(ServiceRefWrapper::from_service(
+        let (r, task) = ServiceRefWrapper::from_service(
             service_ref,
             OpType::new(&self.service_type, OpKind::Publish),
+            Some(Box::new(context)),
             None,
-            None,
-        )?)
+        )?;
+
+        let fut = async move {
+            match rx.recv().await {
+                Some(v) => v.map_err(|e| e.into()),
+                None => Err(ZeroconfError::Dropped),
+            }
+        };
+
+        Ok((r, task, fut))
     }
 }

@@ -35,16 +35,18 @@ pub enum ZeroconfError {
     /// Null byte in a string conversion
     NullString(NulError),
     /// Poisoned Mutex
-    Poison(),
+    Poison,
     /// Failed to convert to a UTF-8 string
     Utf8(Utf8Error),
     /// Interface not found
     InterfaceNotFound(String),
+    /// Dropped a task
+    Dropped,
 }
 
 impl From<PoisonError<std::sync::MutexGuard<'_, ()>>> for ZeroconfError {
     fn from(_: PoisonError<std::sync::MutexGuard<'_, ()>>) -> Self {
-        ZeroconfError::Poison()
+        ZeroconfError::Poison
     }
 }
 
@@ -90,9 +92,10 @@ impl fmt::Display for ZeroconfError {
                 format!("'{}' service not from browser", s.service_type())
             }
             ZeroconfError::NullString(s) => s.to_string(),
-            ZeroconfError::Poison() => "mutex was poisoned".to_string(),
+            ZeroconfError::Poison => "mutex was poisoned".to_string(),
             ZeroconfError::Utf8(e) => e.to_string(),
             ZeroconfError::InterfaceNotFound(s) => format!("interface not found '{}'", s),
+            ZeroconfError::Dropped => "task dropped before expected".to_string(),
         };
         write!(f, "{}", s)
     }
@@ -118,28 +121,51 @@ impl Error for ZeroconfError {
 /// [b]: https://developer.apple.com/documentation/dnssd/dns_service_discovery_c
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum BonjourError {
+    /// Unknown error
     Unknown,
+    /// No such name
     NoSuchName,
+    /// Out of memory
     NoMemory,
+    /// Bad parameter passed to function
     BadParam,
+    /// Bad reference
     BadReference,
+    /// Bad state
     BadState,
+    /// Unexpected flags to function
     BadFlags,
+    /// Unsupported
     Unsupported,
+    /// Not initialized
     NotInitialized,
+    /// Already registered
     AlreadyRegistered,
+    /// Name conflicts with existing service
     NameConflict,
+    /// Invalid index or character
     Invalid,
+    /// Firewall
     Firewall,
+    /// Client library incompatible with daemon
     Incompatible,
+    /// Interface index doesn't exist
     BadInterfaceIndex,
+    /// Refused
     Refused,
+    /// No such record
     NoSuchRecord,
+    /// No auth
     NoAuth,
+    /// Key does not exist in TXT record
     NoSuchKey,
+    /// NAT traversal
     NATTraversal,
+    /// More than one NAT gateway between source and destination
     DoubleNAT,
+    /// Bad time
     BadTime,
+    /// Undefined error
     Undefined,
 }
 

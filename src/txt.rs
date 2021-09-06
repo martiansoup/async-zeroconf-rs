@@ -13,7 +13,7 @@ use crate::ZeroconfError;
 /// txt.add("key1".to_string(), "value1".to_string());
 /// txt.add("key2".to_string(), "value2".to_string());
 /// let service_ref = async_zeroconf::Service::new_with_txt("Server", "_http._tcp", 80, txt)
-///                       .publish()?;
+///                       .publish().await?;
 /// # Ok::<(), async_zeroconf::ZeroconfError>(())
 /// # });
 /// ```

@@ -16,7 +16,7 @@ use bonjour_sys::{
 };
 
 /// `ServiceResolver` is used resolve a service obtained from a
-/// [ServiceBrowser][crate::ServiceBrowser]. Browsing does not obtain all
+/// [`ServiceBrowser`][`crate::ServiceBrowser`]. Browsing does not obtain all
 /// information about a service, for example it doesn't include port
 /// information, and resolving the service will fill this information in.
 ///
@@ -76,8 +76,8 @@ impl ServiceResolver {
         self
     }
 
-    /// Static method to resolve the specified [Service], the service must have
-    /// been produced from a [ServiceBrowser][crate::ServiceBrowser] to ensure
+    /// Static method to resolve the specified [`Service`], the service must have
+    /// been produced from a [`ServiceBrowser`][`crate::ServiceBrowser`] to ensure
     /// that the required information for the resolve operation is available.
     ///
     /// # Examples
@@ -100,7 +100,7 @@ impl ServiceResolver {
         resolver.resolve(service).await
     }
 
-    /// Resolve the specified [Service] using this `ServiceResolver`. This does
+    /// Resolve the specified [`Service`] using this `ServiceResolver`. This does
     /// not consume the `ServiceResolver` so more services can be resolved
     /// using the same settings.
     ///
@@ -126,8 +126,8 @@ impl ServiceResolver {
         resolver.get(service).await
     }
 
-    /// Resolve the specified [Service] using this `ServiceResolver`. The
-    /// returned [ProcessTask] future must be awaited to process events
+    /// Resolve the specified [`Service`] using this `ServiceResolver`. The
+    /// returned [`ProcessTask`] future must be awaited to process events
     /// associated with the browser.
     ///
     /// If the resolve operation can be constructed, this will return a
@@ -137,7 +137,7 @@ impl ServiceResolver {
     ///
     /// # Note
     /// This method is intended if more control is needed over how the task
-    /// is spawned. [ServiceResolver::resolve] will automatically spawn the
+    /// is spawned. [`ServiceResolver::resolve`] will automatically spawn the
     /// task.
     ///
     /// # Examples

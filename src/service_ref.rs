@@ -14,13 +14,13 @@ use tokio::io::unix::AsyncFd;
 use tokio::sync::oneshot;
 
 /// `OpType` is used to indicate the service type and the kind of operation
-/// associated with a [ServiceRef]. Primarily intended for debug.
+/// associated with a [`ServiceRef`]. Primarily intended for debug.
 ///
 /// # Examples
 /// ```
 /// # tokio_test::block_on(async {
 /// let service = async_zeroconf::Service::new("Server", "_http._tcp", 80);
-/// let service_ref = service.publish()?;
+/// let service_ref = service.publish().await?;
 ///
 /// assert_eq!(service_ref.op_type().service_type(), "_http._tcp");
 /// assert_eq!(service_ref.op_type().kind(), &async_zeroconf::OpKind::Publish);
@@ -59,8 +59,8 @@ impl Display for OpType {
 }
 
 /// `OpKind` represents the possible kinds of operation associated with a
-/// [ServiceRef], primarily used for debug and obtained from the [OpType]
-/// returned by [ServiceRef::op_type].
+/// [`ServiceRef`], primarily used for debug and obtained from the [`OpType`]
+/// returned by [`ServiceRef::op_type`].
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum OpKind {
     /// An operation publishing a service.
@@ -76,10 +76,10 @@ pub enum OpKind {
 /// When dropped the Service will be removed and any associated resources
 /// deallocated.
 ///
-/// This should be created via a [Service][crate::Service] or a
-/// [ServiceResolver][crate::ServiceResolver]. For a browse
+/// This should be created via a [`Service`][`crate::Service`] or a
+/// [`ServiceResolver`][`crate::ServiceResolver`]. For a browse
 /// operation the `ServiceRef` is held by the `ServiceBrowser` created by a
-/// [ServiceBrowserBuilder][crate::ServiceBrowserBuilder].
+/// [`ServiceBrowserBuilder`][`crate::ServiceBrowserBuilder`].
 #[derive(Debug)]
 #[must_use]
 pub struct ServiceRef {

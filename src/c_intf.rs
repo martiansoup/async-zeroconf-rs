@@ -10,13 +10,13 @@ use bonjour_sys::{
 };
 
 pub(crate) fn service_register(
-    name: &str,
-    reqtype: (&str, u16),
+    reqtype: (&str, &str, u16),
     interface: &Interface,
     domain_host: (Option<&str>, Option<&str>),
     txt: &TxtRecord,
     callback: DNSServiceRegisterReply,
     allow_rename: bool,
+    context: *mut libc::c_void,
 ) -> Result<DNSServiceRef, ZeroconfError> {
     log::trace!("Formatting C arguments for DNSServiceRegister");
     let mut service_ref: DNSServiceRef = ptr::null_mut();
@@ -30,7 +30,7 @@ pub(crate) fn service_register(
         Interface::Interface(id) => *id,
     };
 
-    let (reqtype, port) = reqtype;
+    let (name, reqtype, port) = reqtype;
     let (domain, host) = domain_host;
 
     let cname = ffi::CString::new(name)?;
@@ -75,7 +75,6 @@ pub(crate) fn service_register(
 
     let txt_len = unsafe { TXTRecordGetLength(&txt_record) };
     let txt_ptr = unsafe { TXTRecordGetBytesPtr(&txt_record) };
-    let context = ptr::null_mut();
     log::trace!("Call DNSServiceRegister");
     let err = unsafe {
         DNSServiceRegister(

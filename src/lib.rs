@@ -1,4 +1,4 @@
-//! `async-zeroconf` is a crate to register ZeroConf services and provides a
+//! `async-zeroconf` is a crate to register `ZeroConf` services and provides a
 //! way of keeping the service alive using a reference to the service which
 //! keeps the service registered until it is dropped. Internally, a tokio task
 //! is spawned to check for events asynchronously.
@@ -9,16 +9,16 @@
 //! // Create a service description
 //! let service = async_zeroconf::Service::new("Server", "_http._tcp", 80);
 //! // Publish the service
-//! let service_ref = service.publish()?;
+//! let service_ref = service.publish().await?;
 //! // Service kept alive until service_ref dropped
 //! # Ok::<(), async_zeroconf::ZeroconfError>(())
 //! # });
 //! ```
 //!
-//! [ServiceBrowserBuilder] and [ServiceResolver] can be used to browse and
+//! [`ServiceBrowserBuilder`] and [`ServiceResolver`] can be used to browse and
 //! resolve services respectively.
 
-extern crate bonjour_sys;
+#![warn(clippy::doc_markdown, missing_docs)]
 
 mod c_intf;
 mod error;

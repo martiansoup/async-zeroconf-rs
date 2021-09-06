@@ -13,7 +13,7 @@ async fn main() -> Result<(), async_zeroconf::ZeroconfError> {
     // Create a service description
     let service = async_zeroconf::Service::new("Server", "_http._tcp", 80);
     // Publish the service
-    let service_ref = service.publish()?;
+    let service_ref = service.publish().await?;
     // Service kept alive until service_ref dropped
     Ok(())
 }
@@ -53,6 +53,14 @@ async fn main() -> Result<(), async_zeroconf::ZeroconfError> {
     Ok(())
 }
 ```
+
+## Changelog
+
+- 0.2.0
+    - Fix issues with errors on publishing a service
+    - `publish` is now an async function as it waits for errors
+- 0.1.0
+    - Initial version
 
 ## License
 
