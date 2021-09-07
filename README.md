@@ -56,6 +56,8 @@ async fn main() -> Result<(), async_zeroconf::ZeroconfError> {
 
 ## Changelog
 
+- 0.2.1
+    - Fix minor issue with C types
 - 0.2.0
     - Fix issues with errors on publishing a service
     - `publish` is now an async function as it waits for errors

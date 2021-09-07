@@ -327,7 +327,7 @@ unsafe fn resolve_callback_inner(
         let mut valsize = 0;
         let mut valptr: *const libc::c_void = ptr::null_mut();
         let mut keybuf = vec![0; (keysize + 1).into()];
-        let keyptr = keybuf.as_mut_ptr() as *mut i8;
+        let keyptr = keybuf.as_mut_ptr() as *mut libc::c_char;
         let err = TXTRecordGetItemAtIndex(
             txt_len,
             txt_record as *const libc::c_void,
