@@ -255,6 +255,12 @@ impl Service {
         self.port
     }
 
+    /// Get the host of the service
+    pub fn host(&self) -> &Option<String> { &self.host }
+
+    /// Get the TxtRecord for this service
+    pub fn txt(&self) -> &TxtRecord { &self.txt }
+
     /// Add a TXT entry to the service
     pub fn add_txt(&mut self, k: String, v: String) -> &mut Self {
         self.txt.add(k, v);

@@ -56,6 +56,8 @@ async fn main() -> Result<(), async_zeroconf::ZeroconfError> {
 
 ## Changelog
 
+- 0.2.2
+    - Add accessors for `host`/`txt` on `Service`
 - 0.2.1
     - Fix minor issue with C types
 - 0.2.0
